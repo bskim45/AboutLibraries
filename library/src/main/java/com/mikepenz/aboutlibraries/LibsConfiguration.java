@@ -1,13 +1,17 @@
 package com.mikepenz.aboutlibraries;
 
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.animation.LayoutAnimationController;
 
 import com.mikepenz.aboutlibraries.entity.Library;
+import com.mikepenz.aboutlibraries.ui.item.HeaderItem;
+import com.mikepenz.aboutlibraries.ui.item.LibraryItem;
 
 /**
  * Created by mikepenz on 20.05.15.
  */
+@SuppressWarnings("unused")
 public class LibsConfiguration {
 
     private static LibsConfiguration SINGLETON = null;
@@ -26,44 +30,78 @@ public class LibsConfiguration {
     /**
      * LOGIC FOR THE LISTENER
      */
-    private LibsListener listener = null;
+    private LibsListener mListener = null;
 
     public void setListener(LibsListener libsListener) {
-        this.listener = libsListener;
+        this.mListener = libsListener;
     }
 
     public LibsListener getListener() {
-        return listener;
+        return mListener;
     }
 
     public void removeListener() {
-        this.listener = null;
+        this.mListener = null;
     }
 
-
-    private LibsUIListener uiListener = null;
+    private LibsUIListener mUiListener = null;
 
     public LibsUIListener getUiListener() {
-        return uiListener;
+        return mUiListener;
     }
 
     public void setUiListener(LibsUIListener uiListener) {
-        this.uiListener = uiListener;
+        this.mUiListener = uiListener;
     }
 
     public void removeUiListener() {
-        this.uiListener = null;
+        this.mUiListener = null;
     }
 
 
-    private LayoutAnimationController layoutAnimationController = null;
+    private LibsRecyclerViewListener mRecyclerViewListener = null;
+
+    public LibsRecyclerViewListener getLibsRecyclerViewListener() {
+        return mRecyclerViewListener;
+    }
+
+    public void setLibsRecyclerViewListener(LibsRecyclerViewListener recyclerViewListener) {
+        this.mRecyclerViewListener = recyclerViewListener;
+    }
+
+    public void removeLibsRecyclerViewListener() {
+        this.mRecyclerViewListener = null;
+    }
+
+
+    private LayoutAnimationController mLayoutAnimationController = null;
 
     public LayoutAnimationController getLayoutAnimationController() {
-        return layoutAnimationController;
+        return mLayoutAnimationController;
     }
 
     public void setLayoutAnimationController(LayoutAnimationController layoutAnimationController) {
-        this.layoutAnimationController = layoutAnimationController;
+        this.mLayoutAnimationController = layoutAnimationController;
+    }
+
+    private RecyclerView.ItemAnimator mItemAnimator;
+
+    public RecyclerView.ItemAnimator getItemAnimator() {
+        return mItemAnimator;
+    }
+
+    public void setItemAnimator(RecyclerView.ItemAnimator itemAnimator) {
+        this.mItemAnimator = itemAnimator;
+    }
+
+    private LibTaskCallback mLibTaskCallback;
+
+    public LibTaskCallback getLibTaskCallback() {
+        return mLibTaskCallback;
+    }
+
+    public void setLibTaskCallback(LibTaskCallback mLibTaskCallback) {
+        this.mLibTaskCallback = mLibTaskCallback;
     }
 
     /**
@@ -76,9 +114,37 @@ public class LibsConfiguration {
 
 
     public interface LibsUIListener {
+        /**
+         * PreOnCreateView method called before the view was created
+         *
+         * @param view
+         * @return
+         */
         View preOnCreateView(View view);
 
+        /**
+         * PostOnCreateView method called after the view was created
+         *
+         * @param view
+         * @return
+         */
         View postOnCreateView(View view);
+    }
+
+    public interface LibsRecyclerViewListener {
+        /**
+         * OnBindHeaderViewHolder called after the headerView was filled inside the recyclerViews onBindViewHolder method
+         *
+         * @param headerViewHolder
+         */
+        void onBindViewHolder(HeaderItem.ViewHolder headerViewHolder);
+
+        /**
+         * onBindViewHolder called after the item view was filled inside the recyclerViews onBindViewHolder method
+         *
+         * @param viewHolder
+         */
+        void onBindViewHolder(LibraryItem.ViewHolder viewHolder);
     }
 
     public interface LibsListener {
@@ -163,6 +229,16 @@ public class LibsConfiguration {
          * @return true if consumed and no further action is required
          */
         boolean onLibraryBottomLongClicked(View v, Library library);
+    }
+
+    public abstract class LibsRecyclerViewListenerImpl implements LibsRecyclerViewListener {
+        @Override
+        public void onBindViewHolder(HeaderItem.ViewHolder headerViewHolder) {
+        }
+
+        @Override
+        public void onBindViewHolder(LibraryItem.ViewHolder holder) {
+        }
     }
 
     public abstract class LibsListenerImpl implements LibsListener {

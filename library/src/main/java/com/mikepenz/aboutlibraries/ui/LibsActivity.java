@@ -1,9 +1,7 @@
 package com.mikepenz.aboutlibraries.ui;
 
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
@@ -53,10 +51,10 @@ public class LibsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_opensource);
         String title = "";
-        if (bundle != null && bundle.containsKey(Libs.BUNDLE_TITLE)) {
-            title = bundle.getString(Libs.BUNDLE_TITLE);
+        if (bundle != null) {
+            title = bundle.getString(Libs.BUNDLE_TITLE, "");
         }
-        LibsFragment fragment = new LibsFragment();
+        LibsSupportFragment fragment = new LibsSupportFragment();
         fragment.setArguments(bundle);
 
 
@@ -68,12 +66,6 @@ public class LibsActivity extends AppCompatActivity {
             toolbar.setSubtitleTextColor(Color.WHITE);
         }
         setSupportActionBar(toolbar);
-        //if we use the DarkToolbar style we have to handle the back arrow on our own too
-        if (activityStyle == Libs.ActivityStyle.LIGHT_DARK_TOOLBAR && getSupportActionBar() != null) {
-            final Drawable upArrow = getResources().getDrawable(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-            upArrow.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_ATOP);
-            getSupportActionBar().setHomeAsUpIndicator(upArrow);
-        }
 
         // Support ActionBar :D
         ActionBar ab = getSupportActionBar();
@@ -93,15 +85,10 @@ public class LibsActivity extends AppCompatActivity {
 
             // SetUp ActionBar
             ab.setDisplayHomeAsUpEnabled(true);
-            if (TextUtils.isEmpty(title)) {
-                ab.setDisplayShowTitleEnabled(false);
-            } else {
-                ab.setDisplayShowTitleEnabled(true);
-                ab.setTitle(title);
-            }
+            ab.setDisplayShowTitleEnabled(!TextUtils.isEmpty(title));
+            ab.setTitle(title);
         }
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.frame_container, fragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.frame_container, fragment).commit();
     }
 
     @Override

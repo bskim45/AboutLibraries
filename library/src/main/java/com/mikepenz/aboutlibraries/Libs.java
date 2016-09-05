@@ -8,6 +8,7 @@ import android.util.Log;
 import com.mikepenz.aboutlibraries.detector.Detect;
 import com.mikepenz.aboutlibraries.entity.Library;
 import com.mikepenz.aboutlibraries.entity.License;
+import com.mikepenz.aboutlibraries.util.GenericsUtil;
 import com.mikepenz.aboutlibraries.util.Util;
 
 import java.lang.reflect.Field;
@@ -55,21 +56,17 @@ public class Libs {
     private static final String DEFINE_INT = "define_int_";
     private static final String DEFINE_EXT = "define_";
 
-    private Context ctx;
-
-    private ArrayList<Library> internLibraries = new ArrayList<Library>();
-    private ArrayList<Library> externLibraries = new ArrayList<Library>();
-    private ArrayList<License> licenses = new ArrayList<License>();
+    private ArrayList<Library> internLibraries = new ArrayList<>();
+    private ArrayList<Library> externLibraries = new ArrayList<>();
+    private ArrayList<License> licenses = new ArrayList<>();
 
     public Libs(Context context) {
-        ctx = context;
-        String[] fields = toStringArray(R.string.class.getFields());
-        init(fields);
+        String[] fields = GenericsUtil.getFields(context);
+        init(context, fields);
     }
 
     public Libs(Context context, String[] fields) {
-        ctx = context;
-        init(fields);
+        init(context, fields);
     }
 
     /**
@@ -77,33 +74,33 @@ public class Libs {
      *
      * @param fields
      */
-    private void init(String[] fields) {
-        ArrayList<String> foundLicenseIdentifiers = new ArrayList<String>();
-        ArrayList<String> foundInternalLibraryIdentifiers = new ArrayList<String>();
-        ArrayList<String> foundExternalLibraryIdentifiers = new ArrayList<String>();
+    private void init(Context ctx, String[] fields) {
+        ArrayList<String> foundLicenseIdentifiers = new ArrayList<>();
+        ArrayList<String> foundInternalLibraryIdentifiers = new ArrayList<>();
+        ArrayList<String> foundExternalLibraryIdentifiers = new ArrayList<>();
 
         if (fields != null) {
-            for (int i = 0; i < fields.length; i++) {
-                if (fields[i].startsWith(DEFINE_LICENSE)) {
-                    foundLicenseIdentifiers.add(fields[i].replace(DEFINE_LICENSE, ""));
-                } else if (fields[i].startsWith(DEFINE_INT)) {
-                    foundInternalLibraryIdentifiers.add(fields[i].replace(DEFINE_INT, ""));
-                } else if (fields[i].startsWith(DEFINE_EXT)) {
-                    foundExternalLibraryIdentifiers.add(fields[i].replace(DEFINE_EXT, ""));
+            for (String field : fields) {
+                if (field.startsWith(DEFINE_LICENSE)) {
+                    foundLicenseIdentifiers.add(field.replace(DEFINE_LICENSE, ""));
+                } else if (field.startsWith(DEFINE_INT)) {
+                    foundInternalLibraryIdentifiers.add(field.replace(DEFINE_INT, ""));
+                } else if (field.startsWith(DEFINE_EXT)) {
+                    foundExternalLibraryIdentifiers.add(field.replace(DEFINE_EXT, ""));
                 }
             }
         }
 
         //add licenses
         for (String licenseIdentifier : foundLicenseIdentifiers) {
-            License license = genLicense(licenseIdentifier);
+            License license = genLicense(ctx, licenseIdentifier);
             if (license != null) {
                 licenses.add(license);
             }
         }
         //add internal libs
         for (String internalIdentifier : foundInternalLibraryIdentifiers) {
-            Library library = genLibrary(internalIdentifier);
+            Library library = genLibrary(ctx, internalIdentifier);
             if (library != null) {
                 library.setInternal(true);
                 internLibraries.add(library);
@@ -112,7 +109,7 @@ public class Libs {
 
         //add external libs
         for (String externalIdentifier : foundExternalLibraryIdentifiers) {
-            Library library = genLibrary(externalIdentifier);
+            Library library = genLibrary(ctx, externalIdentifier);
             if (library != null) {
                 library.setInternal(false);
                 externLibraries.add(library);
@@ -146,11 +143,11 @@ public class Libs {
      * @param sort              defines if the array should be sorted
      * @return the summarized list of included Libraries
      */
-    public ArrayList<Library> prepareLibraries(String[] internalLibraries, String[] excludeLibraries, boolean autoDetect, boolean sort) {
+    public ArrayList<Library> prepareLibraries(Context ctx, String[] internalLibraries, String[] excludeLibraries, boolean autoDetect, boolean sort) {
         HashMap<String, Library> libraries = new HashMap<String, Library>();
 
         if (autoDetect) {
-            for (Library lib : getAutoDetectedLibraries()) {
+            for (Library lib : getAutoDetectedLibraries(ctx)) {
                 libraries.put(lib.getDefinedName(), lib);
             }
         }
@@ -170,11 +167,11 @@ public class Libs {
             }
         }
 
-        ArrayList<Library> resultLibraries = new ArrayList<Library>(libraries.values());
+        ArrayList<Library> resultLibraries = new ArrayList<>(libraries.values());
 
         //remove libraries which should be excluded
         if (excludeLibraries != null) {
-            List<Library> libsToRemove = new ArrayList<Library>();
+            List<Library> libsToRemove = new ArrayList<>();
             for (String excludeLibrary : excludeLibraries) {
                 for (Library library : resultLibraries) {
                     if (library.getDefinedName().equals(excludeLibrary)) {
@@ -199,8 +196,8 @@ public class Libs {
      *
      * @return an ArrayList Library with all found libs by their classpath
      */
-    public ArrayList<Library> getAutoDetectedLibraries() {
-        ArrayList<Library> libraries = new ArrayList<Library>();
+    public ArrayList<Library> getAutoDetectedLibraries(Context ctx) {
+        ArrayList<Library> libraries = new ArrayList<>();
 
         PackageInfo pi = Util.getPackageInfo(ctx);
         if (pi != null) {
@@ -240,7 +237,7 @@ public class Libs {
      * @return an ArrayList Library with all available internLibraries
      */
     public ArrayList<Library> getInternLibraries() {
-        return new ArrayList<Library>(internLibraries);
+        return new ArrayList<>(internLibraries);
     }
 
     /**
@@ -249,7 +246,7 @@ public class Libs {
      * @return an ArrayList Library  with all available externLibraries
      */
     public ArrayList<Library> getExternLibraries() {
-        return new ArrayList<Library>(externLibraries);
+        return new ArrayList<>(externLibraries);
     }
 
     /**
@@ -267,7 +264,7 @@ public class Libs {
      * @return an ArrayList Library with all available Libraries
      */
     public ArrayList<Library> getLibraries() {
-        ArrayList<Library> libs = new ArrayList<Library>();
+        ArrayList<Library> libs = new ArrayList<>();
         libs.addAll(getInternLibraries());
         libs.addAll(getExternLibraries());
         return libs;
@@ -329,7 +326,7 @@ public class Libs {
      * @return
      */
     private ArrayList<Library> find(ArrayList<Library> libraries, String searchTerm, boolean idOnly, int limit) {
-        ArrayList<Library> localLibs = new ArrayList<Library>();
+        ArrayList<Library> localLibs = new ArrayList<>();
 
         int count = 0;
         for (Library library : libraries) {
@@ -377,16 +374,16 @@ public class Libs {
      * @param licenseName
      * @return
      */
-    private License genLicense(String licenseName) {
+    private License genLicense(Context ctx, String licenseName) {
         licenseName = licenseName.replace("-", "_");
 
         try {
             License lic = new License();
             lic.setDefinedName(licenseName);
-            lic.setLicenseName(getStringResourceByName("license_" + licenseName + "_licenseName"));
-            lic.setLicenseWebsite(getStringResourceByName("license_" + licenseName + "_licenseWebsite"));
-            lic.setLicenseShortDescription(getStringResourceByName("license_" + licenseName + "_licenseShortDescription"));
-            lic.setLicenseDescription(getStringResourceByName("license_" + licenseName + "_licenseDescription"));
+            lic.setLicenseName(getStringResourceByName(ctx, "license_" + licenseName + "_licenseName"));
+            lic.setLicenseWebsite(getStringResourceByName(ctx, "license_" + licenseName + "_licenseWebsite"));
+            lic.setLicenseShortDescription(getStringResourceByName(ctx, "license_" + licenseName + "_licenseShortDescription"));
+            lic.setLicenseDescription(getStringResourceByName(ctx, "license_" + licenseName + "_licenseDescription"));
             return lic;
         } catch (Exception ex) {
             Log.e("aboutlibraries", "Failed to generateLicense from file: " + ex.toString());
@@ -398,29 +395,29 @@ public class Libs {
      * @param libraryName
      * @return
      */
-    private Library genLibrary(String libraryName) {
+    private Library genLibrary(Context ctx, String libraryName) {
         libraryName = libraryName.replace("-", "_");
 
         try {
             Library lib = new Library();
 
             //Get custom vars to insert into defined areas
-            HashMap<String, String> customVariables = getCustomVariables(libraryName);
+            HashMap<String, String> customVariables = getCustomVariables(ctx, libraryName);
 
             lib.setDefinedName(libraryName);
-            lib.setAuthor(getStringResourceByName("library_" + libraryName + "_author"));
-            lib.setAuthorWebsite(getStringResourceByName("library_" + libraryName + "_authorWebsite"));
-            lib.setLibraryName(getStringResourceByName("library_" + libraryName + "_libraryName"));
-            lib.setLibraryDescription(insertVariables(getStringResourceByName("library_" + libraryName + "_libraryDescription"), customVariables));
-            lib.setLibraryVersion(getStringResourceByName("library_" + libraryName + "_libraryVersion"));
-            lib.setLibraryWebsite(getStringResourceByName("library_" + libraryName + "_libraryWebsite"));
+            lib.setAuthor(getStringResourceByName(ctx, "library_" + libraryName + "_author"));
+            lib.setAuthorWebsite(getStringResourceByName(ctx, "library_" + libraryName + "_authorWebsite"));
+            lib.setLibraryName(getStringResourceByName(ctx, "library_" + libraryName + "_libraryName"));
+            lib.setLibraryDescription(insertVariables(getStringResourceByName(ctx, "library_" + libraryName + "_libraryDescription"), customVariables));
+            lib.setLibraryVersion(getStringResourceByName(ctx, "library_" + libraryName + "_libraryVersion"));
+            lib.setLibraryWebsite(getStringResourceByName(ctx, "library_" + libraryName + "_libraryWebsite"));
 
-            String licenseId = getStringResourceByName("library_" + libraryName + "_licenseId");
+            String licenseId = getStringResourceByName(ctx, "library_" + libraryName + "_licenseId");
             if (TextUtils.isEmpty(licenseId)) {
                 License license = new License();
-                license.setLicenseName(getStringResourceByName("library_" + libraryName + "_licenseVersion"));
-                license.setLicenseWebsite(getStringResourceByName("library_" + libraryName + "_licenseLink"));
-                license.setLicenseShortDescription(insertVariables(getStringResourceByName("library_" + libraryName + "_licenseContent"), customVariables));
+                license.setLicenseName(getStringResourceByName(ctx, "library_" + libraryName + "_licenseVersion"));
+                license.setLicenseWebsite(getStringResourceByName(ctx, "library_" + libraryName + "_licenseLink"));
+                license.setLicenseShortDescription(insertVariables(getStringResourceByName(ctx, "library_" + libraryName + "_licenseContent"), customVariables));
                 lib.setLicense(license);
             } else {
                 License license = getLicense(licenseId);
@@ -432,10 +429,10 @@ public class Libs {
                 }
             }
 
-            lib.setOpenSource(Boolean.valueOf(getStringResourceByName("library_" + libraryName + "_isOpenSource")));
-            lib.setRepositoryLink(getStringResourceByName("library_" + libraryName + "_repositoryLink"));
+            lib.setOpenSource(Boolean.valueOf(getStringResourceByName(ctx, "library_" + libraryName + "_isOpenSource")));
+            lib.setRepositoryLink(getStringResourceByName(ctx, "library_" + libraryName + "_repositoryLink"));
 
-            lib.setClassPath(getStringResourceByName("library_" + libraryName + "_classPath"));
+            lib.setClassPath(getStringResourceByName(ctx, "library_" + libraryName + "_classPath"));
 
             if (TextUtils.isEmpty(lib.getLibraryName()) && TextUtils.isEmpty(lib.getLibraryDescription())) {
                 return null;
@@ -452,19 +449,19 @@ public class Libs {
      * @param libraryName
      * @return
      */
-    public HashMap<String, String> getCustomVariables(String libraryName) {
+    public HashMap<String, String> getCustomVariables(Context ctx, String libraryName) {
         HashMap<String, String> customVariables = new HashMap<String, String>();
 
-        String customVariablesString = getStringResourceByName(DEFINE_EXT + libraryName);
+        String customVariablesString = getStringResourceByName(ctx, DEFINE_EXT + libraryName);
         if (TextUtils.isEmpty(customVariablesString)) {
-            customVariablesString = getStringResourceByName(DEFINE_INT + libraryName);
+            customVariablesString = getStringResourceByName(ctx, DEFINE_INT + libraryName);
         }
 
         if (!TextUtils.isEmpty(customVariablesString)) {
             String[] customVariableArray = customVariablesString.split(";");
             if (customVariableArray.length > 0) {
                 for (String customVariableKey : customVariableArray) {
-                    String customVariableContent = getStringResourceByName("library_" + libraryName + "_" + customVariableKey);
+                    String customVariableContent = getStringResourceByName(ctx, "library_" + libraryName + "_" + customVariableKey);
                     if (!TextUtils.isEmpty(customVariableContent)) {
                         customVariables.put(customVariableKey, customVariableContent);
                     }
@@ -489,7 +486,7 @@ public class Libs {
         return insertInto;
     }
 
-    public String getStringResourceByName(String aString) {
+    public String getStringResourceByName(Context ctx, String aString) {
         String packageName = ctx.getPackageName();
 
         int resId = ctx.getResources().getIdentifier(aString, "string", packageName);

@@ -3,20 +3,25 @@ package com.mikepenz.aboutlibraries;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
+import android.view.animation.LayoutAnimationController;
 
 import com.mikepenz.aboutlibraries.entity.Library;
 import com.mikepenz.aboutlibraries.ui.LibsActivity;
-import com.mikepenz.aboutlibraries.ui.LibsFragment;
-import com.mikepenz.aboutlibraries.ui.adapter.LibsRecyclerViewAdapter;
+import com.mikepenz.aboutlibraries.ui.LibsSupportFragment;
+import com.mikepenz.aboutlibraries.ui.item.LibraryItem;
 import com.mikepenz.aboutlibraries.util.Colors;
+import com.mikepenz.fastadapter.adapters.FastItemAdapter;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
+@SuppressWarnings("unused")
 public class LibsBuilder implements Serializable {
     public String[] fields = null;
     public String[] internalLibraries = null;
@@ -25,13 +30,13 @@ public class LibsBuilder implements Serializable {
     public Boolean autoDetect = true;
     public Boolean sort = true;
     public Comparator<Library> libraryComparator = null;
-    public Boolean animate = true;
 
     public Boolean showLicense = false;
     public Boolean showLicenseDialog = true;
     public Boolean showVersion = false;
 
     public Boolean aboutShowIcon = null;
+    public String aboutVersionString = null;
     public String aboutAppName = null;
     public Boolean aboutShowVersion = null;
     public String aboutDescription = null;
@@ -50,9 +55,24 @@ public class LibsBuilder implements Serializable {
     public Colors activityColor = null;
     public Libs.ActivityStyle activityStyle = null;
 
+    public LibTaskExecutor libTaskExecutor = LibTaskExecutor.DEFAULT_EXECUTOR;
+
     public HashMap<String, HashMap<String, String>> libraryModification = null;
 
+    public Class ownLibsActivityClass = LibsActivity.class;
+
     public LibsBuilder() {
+    }
+
+    /**
+     * Builder method to pass the an own LibsActivity.
+     *
+     * @param clazz Class
+     * @return this
+     */
+    public LibsBuilder withOwnLibsActivityClass(@NonNull Class clazz) {
+        this.ownLibsActivityClass = clazz;
+        return this;
     }
 
     /**
@@ -135,17 +155,6 @@ public class LibsBuilder implements Serializable {
     }
 
     /**
-     * Builder method to disable animations (default: enabled)
-     *
-     * @param animate enabled or disabled
-     * @return this
-     */
-    public LibsBuilder withAnimations(boolean animate) {
-        this.animate = animate;
-        return this;
-    }
-
-    /**
      * Builder method to enable the license display (default: disabled)
      *
      * @param showLicense enabled or disabled
@@ -205,8 +214,8 @@ public class LibsBuilder implements Serializable {
     /**
      * Builder method to enable the display of the application version name as about this app view
      *
-     * @param aboutShowVersion
-     * @return
+     * @param aboutShowVersion enabled or disabled
+     * @return this
      */
     public LibsBuilder withAboutVersionShownName(boolean aboutShowVersion) {
         this.aboutShowVersionName = aboutShowVersion;
@@ -216,11 +225,22 @@ public class LibsBuilder implements Serializable {
     /**
      * Builder method to enable the display of the application version code as about this app view
      *
-     * @param aboutShowVersion
+     * @param aboutShowVersion enabled or disabled
      * @return this
      */
     public LibsBuilder withAboutVersionShownCode(boolean aboutShowVersion) {
         this.aboutShowVersionCode = aboutShowVersion;
+        return this;
+    }
+
+    /**
+     * Builder method to enable the display and set the text of the application version in the about this app view
+     *
+     * @param aboutVersionString enabled or disabled
+     * @return this
+     */
+    public LibsBuilder withAboutVersionString(String aboutVersionString) {
+        this.aboutVersionString = aboutVersionString;
         return this;
     }
 
@@ -337,7 +357,7 @@ public class LibsBuilder implements Serializable {
      * Builder method to set the ActivityStyle
      *
      * @param libraryStyle LibraryStyles.LIGHT / DARK / LIGHT_DARK_TOOLBAR
-     * @return
+     * @return this
      */
     public LibsBuilder withActivityStyle(Libs.ActivityStyle libraryStyle) {
         this.activityStyle = libraryStyle;
@@ -365,7 +385,7 @@ public class LibsBuilder implements Serializable {
      */
     public LibsBuilder withLibraryModification(String library, Libs.LibraryFields modificationKey, String modificationValue) {
         if (this.libraryModification == null) {
-            this.libraryModification = new HashMap<String, HashMap<String, String>>();
+            this.libraryModification = new HashMap<>();
         }
 
         if (!libraryModification.containsKey(library)) {
@@ -378,19 +398,80 @@ public class LibsBuilder implements Serializable {
     }
 
     /**
-     * Builder method to set the listener for the AboutLibraries actions
+     * Builder method to set the LibsListener for the AboutLibraries actions
      *
      * @param libsListener the listener to be notified
-     * @return
+     * @return this
      */
     public LibsBuilder withListener(LibsConfiguration.LibsListener libsListener) {
         LibsConfiguration.getInstance().setListener(libsListener);
         return this;
     }
 
-        /*
-         * START OF THE FINAL METHODS
-         */
+    /**
+     * Builder method to set the LibsRecyclerViewListener for the AboutLibraries recyclerView elements
+     *
+     * @param recyclerViewListener
+     * @return this
+     */
+    public LibsBuilder withLibsRecyclerViewListener(LibsConfiguration.LibsRecyclerViewListener recyclerViewListener) {
+        LibsConfiguration.getInstance().setLibsRecyclerViewListener(recyclerViewListener);
+        return this;
+    }
+
+
+    /**
+     * Builder method to set the LibsUIListener for the AboutLibraries view to hook into the view creation
+     *
+     * @param uiListener
+     * @return this
+     */
+    public LibsBuilder withUiListener(LibsConfiguration.LibsUIListener uiListener) {
+        LibsConfiguration.getInstance().setUiListener(uiListener);
+        return this;
+    }
+
+    /**
+     * Builder method to set the LayoutAnimationController for the RecyclerView
+     *
+     * @param layoutAnimationController
+     * @return this
+     */
+    public LibsBuilder withLayoutAnimationController(LayoutAnimationController layoutAnimationController) {
+        LibsConfiguration.getInstance().setLayoutAnimationController(layoutAnimationController);
+        return this;
+    }
+
+    /**
+     * Builder method to define a custom Thread Executor for asynchronous operations
+     *
+     * @param libTaskExecutor
+     * @return this
+     */
+    public LibsBuilder withLibTaskExecutor(LibTaskExecutor libTaskExecutor) {
+        if (libTaskExecutor != null) {
+            this.libTaskExecutor = libTaskExecutor;
+        }
+        return this;
+    }
+
+    /**
+     * Builder method to define a custom callback which is invoked every time the LibraryTask gets executed.
+     * This interface is called on a LibraryTask's start and end. Make sure the class which implements the
+     * LibTaskCallback is Serializable.
+     *
+     * @param libTaskCallback
+     * @return this
+     */
+    public LibsBuilder withLibTaskCallback(LibTaskCallback libTaskCallback) {
+        LibsConfiguration.getInstance().setLibTaskCallback(libTaskCallback);
+        return this;
+    }
+
+    /*
+     * START OF THE FINAL METHODS
+     */
+
 
     private void preCheck() {
         if (fields == null) {
@@ -404,7 +485,7 @@ public class LibsBuilder implements Serializable {
      * @param context the current context
      * @return a LibsRecyclerViewAdapter with the libraries
      */
-    public LibsRecyclerViewAdapter adapter(Context context) {
+    public FastItemAdapter adapter(Context context) {
         Libs libs;
         if (fields == null) {
             libs = new Libs(context);
@@ -412,19 +493,23 @@ public class LibsBuilder implements Serializable {
             libs = new Libs(context, fields);
         }
 
-
         //apply modifications
         libs.modifyLibraries(libraryModification);
 
         //fetch the libraries and sort if a comparator was set
-        ArrayList<Library> libraries = libs.prepareLibraries(internalLibraries, excludeLibraries, autoDetect, sort);
+        ArrayList<Library> libraries = libs.prepareLibraries(context, internalLibraries, excludeLibraries, autoDetect, sort);
 
         //prepare adapter
-        LibsRecyclerViewAdapter adapter = new LibsRecyclerViewAdapter(this);
-        adapter.addLibs(libraries);
+        FastItemAdapter adapter = new FastItemAdapter();
+        List<LibraryItem> libraryItems = new ArrayList<>();
+        for (Library library : libraries) {
+            libraryItems.add(new LibraryItem().withLibrary(library).withLibsBuilder(this));
+        }
+
+        //noinspection unchecked
+        adapter.add(libraryItems);
         return adapter;
     }
-
 
     /**
      * intent() method to build and create the intent with the set params
@@ -432,14 +517,25 @@ public class LibsBuilder implements Serializable {
      * @return the intent to start the activity
      */
     public Intent intent(Context ctx) {
+        return intent(ctx, ownLibsActivityClass);
+    }
+
+    /**
+     * intent() method to build and create the intent with the set params
+     *
+     * @return the intent to start the activity
+     */
+    public Intent intent(Context ctx, Class clazz) {
         preCheck();
 
-        Intent i = new Intent(ctx, LibsActivity.class);
+        Intent i = new Intent(ctx, clazz);
         i.putExtra("data", this);
         i.putExtra(Libs.BUNDLE_THEME, this.activityTheme);
+
         if (this.activityTitle != null) {
             i.putExtra(Libs.BUNDLE_TITLE, this.activityTitle);
         }
+
         if (this.activityColor != null) {
             i.putExtra(Libs.BUNDLE_COLORS, this.activityColor);
         }
@@ -466,17 +562,16 @@ public class LibsBuilder implements Serializable {
         start(ctx);
     }
 
-
     /**
-     * fragment() method to build and create the fragment with the set params
+     * supportFragment() method to build and create the fragment with the set params
      *
      * @return the fragment to set in your application
      */
-    public LibsFragment fragment() {
+    public LibsSupportFragment supportFragment() {
         Bundle bundle = new Bundle();
         bundle.putSerializable("data", this);
 
-        LibsFragment fragment = new LibsFragment();
+        LibsSupportFragment fragment = new LibsSupportFragment();
         fragment.setArguments(bundle);
 
         return fragment;

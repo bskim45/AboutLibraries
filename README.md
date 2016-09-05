@@ -1,4 +1,4 @@
-#AboutLibraries  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.mikepenz/aboutlibraries/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.mikepenz/aboutlibraries) [![Android Arsenal](http://img.shields.io/badge/Android%20Arsenal-AboutLibraries-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/102)
+#AboutLibraries [![Status](https://travis-ci.org/mikepenz/AboutLibraries.svg?branch=master)](https://travis-ci.org/mikepenz/AboutLibraries) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.mikepenz/aboutlibraries/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.mikepenz/aboutlibraries) [![Android Arsenal](http://img.shields.io/badge/Android%20Arsenal-AboutLibraries-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/102)
 
 [![Join the chat at https://gitter.im/mikepenz/AboutLibraries](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mikepenz/AboutLibraries?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -17,6 +17,9 @@ Here's a quick overview of functions it include:
 #Motivation
 
 Most modern apps feature an "Used Library"-section and for this some information of those libs is required. As it gets annoying to copy those strings always to your app I've developed this small helper library to provide the required information.
+
+#Migration
+- [MIGRATION GUIDE](https://github.com/mikepenz/AboutLibraries/blob/develop/MIGRATION.md)
 
 #Get started
 - [Include in your project](#include-in-your-project)
@@ -46,7 +49,7 @@ You can find anything you search for in the wiki. (If not open an issue)
 The AboutLibraries Library is pushed to [Maven Central](http://search.maven.org/#search|ga|1|g%3A%22com.mikepenz%22), so you just need to add the following dependency to your `build.gradle`. It seems it is also required to add the support dependencies to the application. If it works without, you should be fine too :).
 
 ```javascript
-compile('com.mikepenz:aboutlibraries:5.0.9@aar') {
+compile('com.mikepenz:aboutlibraries:5.8.1@aar') {
 	transitive = true
 }
 ```
@@ -61,22 +64,10 @@ You can use this library in a few different ways. You can create your own activi
 Changed maven group. You can get all updates via the new one `com.mikepenz:aboutlibraries:5.y.z@aar`
 The `Libs.Builder` is no more. It was changed to `LibsBuilder`. Just remove the "." and it is working again.
 
-#### < v4.7.0
-v4.7.0 now comes with themes and the colors are set by theme. If you pass a custom theme to the AboutActivity this theme should have the AboutLibraries theme as parent or include the themed attributes. See the `styles.xml` of the sample activity.
-This release also contains a new feature `withActivityStyle` which allows you to set the style of the Activity. Further details can be found in the release notes.
-
-#### < v4.6.5
-v4.6.5 now uses the latest com.android.support:appcompat version 22.1.0. Please update if you use an older version.
-
-#### < v4.6.0
-Starting with v4.6.0 the LibsActivity implements a Toolbar. You have to use a non actionBar theme, else you'll get a FC.
-
 ###Activity / Fragment
 ####Fragment
 ```java
 LibsFragment fragment = new LibsBuilder()
-	//Pass the fields of your application to the lib so it can find all external lib information
-        .withFields(R.string.class.getFields())
         //get the fragment
         .fragment();
 ```
@@ -84,8 +75,6 @@ LibsFragment fragment = new LibsBuilder()
 #####Code:
 ```java
 new LibsBuilder()
-	//Pass the fields of your application to the lib so it can find all external lib information
-        .withFields(R.string.class.getFields())
         //provide a style (optional) (LIGHT, DARK, LIGHT_DARK_TOOLBAR)
         .withActivityStyle(Libs.ActivityStyle.LIGHT_DARK_TOOLBAR)
         //start the activity
@@ -112,6 +101,15 @@ or use the builder and add following:
 
 ```
 
+##ProGuard
+Exclude `R` from ProGuard to enable the library auto detection
+```proguard
+-keep class .R
+-keep class **.R$* {
+    <fields>;
+}
+```
+
 ##Contribute
 You can contribute by creating a information file for a new library, and open a pull-request at the creators Git repository. If he doesn't include the information file in his repo, or if the library isn't maintained anymore you can create a pull-request here. Find more information in the wiki [Create a definition file](https://github.com/mikepenz/AboutLibraries/wiki/HOWTODEV:-Include-into-AboutLibraries)
 
@@ -119,24 +117,31 @@ You can contribute by creating a information file for a new library, and open a 
 ##Already in use in following apps
 (feel free to send me new projects)
 
+* [wallsplash](https://play.google.com/store/apps/details?id=com.mikepenz.unsplash)
 * [Numbers](https://play.google.com/store/apps/details?id=com.tundem.numbersreloaded.free)
 * [MegaYatzy](https://play.google.com/store/apps/details?id=com.tundem.yatzyTJ)
-
 * [Sir Spellalot](https://play.google.com/store/apps/details?id=com.sirspellalot.app.android)
 * [TVShow Time](https://play.google.com/store/apps/details?id=com.tozelabs.tvshowtime)
 * [Strength](https://play.google.com/store/apps/details?id=com.e13engineering.strength)
 * [Sprit Club](https://play.google.com/store/apps/details?id=at.idev.spritpreise)
 * [Hold'Em Poker Manager](https://play.google.com/store/apps/details?id=pt.massena.holdemtracker.free)
+* [PixCell8](https://play.google.com/store/apps/details?id=com.pixcell8.prod)
+* [ML Manager](https://play.google.com/store/apps/details?id=com.javiersantos.mlmanager)
+* [TurnMe Panorama](https://play.google.com/store/apps/details?id=com.bezine.panosphere)
+* [Navig'Tours](https://play.google.com/store/apps/details?id=com.codetroopers.transport.tours)
+* [AS Sales Management](https://play.google.com/store/apps/details?id=com.armsoft.mtrade)
+* [News](https://play.google.com/store/apps/details?id=com.moblino.countrynews)
 
 
 #Developed By
 
-* Mike Penz - http://mikepenz.com - <mikepenz@gmail.com>
-
+* Mike Penz 
+ * [mikepenz.com](http://mikepenz.com) - <mikepenz@gmail.com>
+ * [paypal.me/mikepenz](http://paypal.me/mikepenz)
 
 #License
 
-    Copyright 2014 Mike Penz
+    Copyright 2016 Mike Penz
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
